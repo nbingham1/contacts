@@ -22,6 +22,14 @@ def merge(arr1, arr2):
 			arr1.append(toAdd)
 	return arr1
 
+def deduplicate(arr):
+	for i in reversed(range(len(arr))):
+		for j in reversed(range(i)):
+			if arr[i].isEqualTo(arr[j]):
+				arr[j].merge(arr[i])
+				del arr[i]
+				break
+
 def cleanDict(d):
 	result = {}
 	for key, value in d.items():
@@ -78,19 +86,19 @@ class Email:
 		self.email = ""
 		self.type = ""
 
-	def isEqualTo(self, email):
-		return self.email == email.email
+	def isEqualTo(self, other):
+		return self.email and other.email and self.email == other.email
 
 	def isValid(self):
 		if self.email:
 			return True
 		return False
 
-	def merge(self, email):
-		if email.email:
-			self.email = email.email
-		if email.type:
-			self.type = email.type
+	def merge(self, other):
+		if other.email:
+			self.email = other.email
+		if other.type:
+			self.type = other.type
 
 	def unwind(self):
 		result = []
@@ -123,19 +131,19 @@ class Phone:
 		self.phone = ""
 		self.type = ""
 
-	def isEqualTo(self, phone):
-		return self.phone == phone.phone
+	def isEqualTo(self, other):
+		return self.phone and other.phone and self.phone == other.phone
 
 	def isValid(self):
 		if self.phone:
 			return True
 		return False
 
-	def merge(self, phone):
-		if phone.phone:
-			self.phone = phone.phone
-		if phone.type:
-			self.type = phone.type
+	def merge(self, other):
+		if other.phone:
+			self.phone = other.phone
+		if other.type:
+			self.type = other.type
 
 	def unwind(self):
 		result = []
@@ -190,7 +198,7 @@ class Address:
 		self.type = ""
 
 	def isEqualTo(self, address):
-		return self.street == address.street
+		return self.street and address.street and self.street == address.street
 
 	def isValid(self):
 		if self.street:
@@ -262,7 +270,7 @@ class Relation:
 		self.type = ""
 
 	def isEqualTo(self, relation):
-		return self.value == relation.value
+		return self.value and relation.value and self.value == relation.value
 
 	def isValid(self):
 		if self.value:
@@ -304,7 +312,7 @@ class Website:
 		self.type = ""
 
 	def isEqualTo(self, website):
-		return self.value == website.value
+		return self.value and website.value and self.value == website.value
 
 	def isValid(self):
 		if self.value:
@@ -351,7 +359,7 @@ class Organization:
 		self.type = ""
 
 	def isEqualTo(self, org):
-		return self.name == org.name and (self.title == "" or org.title == "" or self.title == org.title)
+		return self.name and org.name and self.name == org.name and (not self.title or not org.title or self.title == org.title)
 
 	def isValid(self):
 		if self.name:
@@ -418,7 +426,7 @@ class Event:
 		self.type = ""
 
 	def isEqualTo(self, event):
-		return self.value == event.value
+		return self.value and event.value and self.value == event.value
 
 	def isValid(self):
 		if self.value:
@@ -460,7 +468,7 @@ class Field:
 		self.type = ftype
 
 	def isEqualTo(self, field):
-		return self.value == field.value
+		return self.value and field.value and self.value == field.value
 
 	def isValid(self):
 		if self.value:
@@ -688,7 +696,7 @@ class Contact:
 									contact.last = row[j]
 								elif col == "Email Address":
 									email = Email()
-									email.value = Email.normalize(row[j])
+									email.email = Email.normalize(row[j])
 									email.type = "Work"
 									contact.emails.append(email)
 								elif col == "Company":
@@ -895,7 +903,7 @@ class Contact:
 		return result
 
 	def writeGoogleCSV(filename, contacts, labels=[]):
-		hdr = ["Name","Given Name","Additional Name","Family Name","Yomi Name","Given Name Yomi","Additional Name Yomi","Family Name Yomi","Name Prefix","Name Suffix","Initials","Nickname","Short Name","Maiden Name","Birthday","Gender","Location","Billing Information","Directory Server","Mileage","Occupation","Hobby","Sensitivity","Priority","Subject","Notes","Language","Photo","Group Membership"]
+		hdr = ["Name","Given Name","Additional Name","Family Name","Yomi Name","Given Name Yomi","Additional Name Yomi","Family Name Yomi","Name Prefix","Name Suffix","Initials","Nickname","Short Name","Maiden Name","Birthday","Gender","Location","Billing Information","Directory Server","Mileage","Occupation","Hobby","Sensitivity","Priority","Subject","Notes","Language","Group Membership"]
 
 		emailCount = max([len(contact.emails) for contact in contacts])
 		phoneCount = max([len(contact.phones) for contact in contacts])
@@ -963,8 +971,6 @@ class Contact:
 							row.append(contact.birthday)
 						elif col == "Gender":
 							row.append(contact.gender)
-						elif col == "Photo":
-							row.append(contact.photo)
 						elif col == "Notes":
 							row.append(contact.notes)
 						elif col == "Group Membership":
@@ -1088,12 +1094,14 @@ class Contact:
 
 contacts = Contact.readContacts("contacts.json")
 
-merge(contacts, Contact.readGoogleCSV("talon4196.csv"))
-merge(contacts, Contact.readGoogleCSV("eab242.csv"))
-merge(contacts, Contact.readGoogleCSV("broccoli.csv"))
-merge(contacts, Contact.readGoogleCSV("nbingham.csv"))
-merge(contacts, Contact.readLinkedInCSV("Connections.csv"))
-merge(contacts, Contact.readLinkedInHTML("connections.html"))
+contacts += Contact.readGoogleCSV("talon4196.csv")
+contacts += Contact.readGoogleCSV("eab242.csv")
+contacts += Contact.readGoogleCSV("broccoli.csv")
+contacts += Contact.readGoogleCSV("nbingham.csv")
+contacts += Contact.readLinkedInCSV("Connections.csv")
+contacts += Contact.readLinkedInHTML("connections.html")
+
+deduplicate(contacts)
 
 labels = set()
 for contact in contacts:
