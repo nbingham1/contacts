@@ -1092,23 +1092,3 @@ class Contact:
 	def toJson(self):
 		return json.dumps(self, default=lambda o: cleanDict(o.__dict__), indent=2)
 
-contacts = Contact.readContacts("contacts.json")
-
-contacts += Contact.readGoogleCSV("talon4196.csv")
-contacts += Contact.readGoogleCSV("eab242.csv")
-contacts += Contact.readGoogleCSV("broccoli.csv")
-contacts += Contact.readGoogleCSV("nbingham.csv")
-contacts += Contact.readLinkedInCSV("Connections.csv")
-contacts += Contact.readLinkedInHTML("connections.html")
-
-deduplicate(contacts)
-
-labels = set()
-for contact in contacts:
-	for label in contact.labels:
-		labels.add(label)
-
-print(list(labels))
-Contact.writeContacts("contacts.json", contacts)
-
-Contact.writeGoogleCSV("contacts_updated.csv", contacts)
